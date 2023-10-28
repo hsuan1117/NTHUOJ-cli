@@ -91,7 +91,7 @@ def submit(pid : str, code : str, lang : str = typer.Argument('CPP', help="The l
         print(
             f"[INFO] [blue]You can go to https://acm.cs.nthu.edu.tw/status/?username={config['username']} to check your submission status[/blue]")
 
-        for i in range(10):
+        for i in range(60):
             r = session.get('https://acm.cs.nthu.edu.tw/status/?username={}'.format(config['username']))
             if r.status_code != 200:
                 print('[ERROR] Get status failed')
@@ -101,12 +101,24 @@ def submit(pid : str, code : str, lang : str = typer.Argument('CPP', help="The l
                 status = soup.find('table').find_all('tr')[1].find_all('td')[4].text.strip().replace('\n', '').replace(
                     '                   ', '')
 
-                sys.stdout.write("\r{1}{0}".format("." * i if status == 'Being Judged' else '', status))
-                sys.stdout.flush()
+                if status != 'Being Judged' and status != 'Judging':
+                    if status[0:3] == 'All':
+                        sys.stdout.write("\r\033[32m{0}".format(status))
+                        sys.stdout.flush()
+                    else:
+                        sys.stdout.write("\r\033[31m{0}".format(status))
+                        sys.stdout.flush()
+                    time.sleep(0.5)
+                    return
+                else :
+                    sys.stdout.write("\r{1}{0}".format("." * (i % 4), status) + ' ' * 20)
+                    sys.stdout.flush()
 
-                if status != 'Being Judged':
-                    break
-            time.sleep(1)
+            time.sleep(0.5)
+
+        sys.stdout.write("Time out")
+        sys.stdout.flush()
+
 
 if __name__ == "__main__":
     typer.run(submit)
